@@ -1,4 +1,4 @@
-Make your fragment shaders (GLSL) into png, video or video effects.
+Make your fragment shaders (GLSL) into high resolution images or use as video effects.
 
 You'll need to install using pip3:
 
