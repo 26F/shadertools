@@ -195,9 +195,9 @@ def mutateFrame(frameid, fps, dimensions, ctx, window):
 	glDrawArrays(GL_TRIANGLES, 0, 6)
 
 	glfw.swap_buffers(window)
-	glfw.poll_events();
+	glfw.poll_events()
 
-	frame = glReadPixels(0, 0, dimensions[0], dimensions[1], GL_RGB, GL_UNSIGNED_BYTE)
+	frame = glReadPixels(0, 0, dimensions[0], dimensions[1], GL_BGR, GL_UNSIGNED_BYTE)
 	return np.frombuffer(frame, dtype=np.uint8).reshape(dimensions[1], dimensions[0], 3)
 
 framenum = 0

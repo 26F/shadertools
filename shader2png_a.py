@@ -5,20 +5,18 @@ import glfw
 from glfw import*
 import sys
 
+
 from random import randrange
 
-# import threading
-# from queue import Queue
-
-if len(sys.argv) < 5:
-	print("usage: python3 shader2video.py 30 1920x1080 120 myshader.frag")
+if len(sys.argv) < 2:
+	# usage where n is frame number
+	print("usage: python3 shader2png.py 1920x1080 myshader.frag n")
 	sys.exit(0)
 
 import time
 import numpy as np
-# frames per second, widthxheight shader.frag
-# 60 seconds
-# usage: python3 shader2video.py 30 1920x1080 60 shader.glsl
+
+
 
 # Frames
 # preprocessingbuffer = Queue(maxsize=50)
@@ -34,8 +32,8 @@ vertices = np.array([
      1.0,  1.0, 1.0, 1.0
 ], dtype=np.float32)
 
-fps = int(sys.argv[1])
-dimensions = [int(x) for x in sys.argv[2].split('x')]
+fps = 60
+dimensions = [int(x) for x in sys.argv[1].split('x')]
 
 # vertex shader source code:
 vertexshsrc = """
@@ -98,12 +96,7 @@ def inputVideo(filename):
 # get needed data
 def outputVideo(filename, video):
 	fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-	dst = cv2.VideoWriter(filename, fourcc, video.fps, video.dimensions)
-
-	# Video creation success test
-	assert(dst)
-
-
+	dst = None
 	return Video(dst, video.dimensions, video.fps, video.totalframes)
 
 
@@ -194,7 +187,7 @@ def renderingGLCtx(filename, resolution):
 
 def mutateFrame(frameid, fps, dimensions, ctx, window):
 	itime = frameid * (1.0 / fps)	
-	glUniform1f(glGetUniformLocation(ctx.shaderprogramid, "iTime"), itime);	
+	glUniform1f(glGetUniformLocation(ctx.shaderprogramid, "iTime"), int(sys.argv[3]) * 0.05);	
 
 	glClearColor(0, 0, 0, 1)
 	glClear(GL_COLOR_BUFFER_BIT)
@@ -202,36 +195,28 @@ def mutateFrame(frameid, fps, dimensions, ctx, window):
 	glDrawArrays(GL_TRIANGLES, 0, 6)
 
 	glfw.swap_buffers(window)
-	glfw.poll_events();
+	glfw.poll_events()
 
 	frame = glReadPixels(0, 0, dimensions[0], dimensions[1], GL_BGR, GL_UNSIGNED_BYTE)
 	return np.frombuffer(frame, dtype=np.uint8).reshape(dimensions[1], dimensions[0], 3)
 
-kill = int(sys.argv[3])
-
 framenum = 0
 
-def process(dst, ctx, rwindow, fps, dimensions):
+def process(ctx, rwindow, fps, dimensions):
 	global kill
 	global framenum
 
-	while True:
-		if framenum >= kill:
-			break
-		framenum += 1
+	# dst.src.write(mutateFrame(framenum, fps, dimensions, ctx, rwindow))
+	# Ensure image is produced by putting this line here
+	mutateFrame(framenum, fps, dimensions, ctx, rwindow)
+	mutateFrame(framenum, fps, dimensions, ctx, rwindow)
+	cv2.imwrite("{}.png".format(int(sys.argv[3])), mutateFrame(framenum, fps, dimensions, ctx, rwindow))
 
-		dst.src.write(mutateFrame(framenum, fps, dimensions, ctx, rwindow))
-
-dst = outputVideo("{}.mp4".format(randrange(0, 10000000000000000000)), Video(None, dimensions, fps, kill))
+# dst = outputVideo("{}.mp4".format(randrange(0, 10000000000000000000)), Video(None, dimensions, fps, kill))
 
 rwindow = renderingWindow(dimensions)
-glctx = renderingGLCtx(sys.argv[4], dimensions)
+glctx = renderingGLCtx(sys.argv[2], dimensions)
 
 print("working...")
-process(dst, glctx, rwindow, fps, dimensions)
+process(glctx, rwindow, fps, dimensions)
 
-# processing_thread = threading.Thread(target=process, args=(src, dst, glctx, rwindow))
-# processing_thread.start()
-
-# processing_thread.join()
-dst.src.release()
